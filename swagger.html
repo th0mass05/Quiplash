@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>TreeHuggers API</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" crossorigin="anonymous">
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin="anonymous"></script>
+    <script>
+        if (typeof SwaggerUIBundle !== 'undefined') {
+            SwaggerUIBundle({
+                url: "./openapi.json",
+                dom_id: '#swagger-ui',
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ],
+                layout: "BaseLayout"
+            });
+        } else {
+            document.getElementById('swagger-ui').innerHTML = '<p style="color:red;">Error: Failed to load Swagger UI. Check browser console.</p>';
+        }
+    </script>
+</body>
+</html>

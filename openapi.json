@@ -1,0 +1,997 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Quiplash API for COMP3207",
+    "version": "1.0.0",
+    "description": "API for managing Players and Prompts. \n\nIn Quiplash, players have profiles with their usernames, games played and total score across all games they have played. They can create their own lists of 'prompts' that are used when they play with others.\n\nA game instance is a list of prompts that are shown sequentially to players. Players score in the round is the number of votes their answer received. \n\nPlayer’s total score is the sum of their scores across all rounds. The player with the highest score after all prompts have been answered and voted is the winner."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:7071",
+      "description": "Dev server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Player"
+    },
+    {
+      "name": "Prompt"
+    },
+    {
+      "name": "Utils"
+    }
+  ],
+  "paths": {
+    "/player/register": {
+      "post": {
+        "tags": [
+          "Player"
+        ],
+        "operationId": "registerPlayer",
+        "summary": "Register a new player",
+        "description": "**Registers a new player**.\n\nRules:\n- Username must be unique\n- Username length: 5–12\n- Password length: 8–12\n- Initializes games_played and total_score fields to 0",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerRegisterInput"
+              },
+              "example": {
+                "username": "py_luis",
+                "password": "pythonrulz"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registration result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful registration.",
+                    "value": {
+                      "result": true,
+                      "msg": "OK"
+                    }
+                  },
+                  "failure - username already exists": {
+                    "summary": "Username already exists",
+                    "value": {
+                      "result": false,
+                      "msg": "Username already exists."
+                    }
+                  },
+                  "failure - username invalid length": {
+                    "summary": "Username has an invalid length. Must be between 5 and 12 characters inclusive.",
+                    "value": {
+                      "result": false,
+                      "msg": "Username less than 5 characters or more than 12 characters."
+                    }
+                  },
+                  "failure - password invalid length": {
+                    "summary": "Password has an invalid length. Must be between 8 and 12 characters inclusive.",
+                    "value": {
+                      "result": false,
+                      "msg": "Password less than 8 characters or more than 12 characters."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Invalid request"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/player/login": {
+      "post": {
+        "tags": [
+          "Player"
+        ],
+        "operationId": "loginPlayer",
+        "summary": "Login a player",
+        "description": "Authenticates a user using username and password.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerLoginInput"
+              },
+              "example": {
+                "username": "py_luis",
+                "password": "pythonrulz"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "This endpoint always returns HTTP 200. The success or failure of the operation is indicated in the 'result' field.\n\nLogin result:\n- Success: result=true if username exists and password matches\n- Failure: result=false if credentials are incorrect",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful login",
+                    "value": {
+                      "result": true,
+                      "msg": "OK"
+                    }
+                  },
+                  "failure": {
+                    "summary": "Invalid credentials",
+                    "value": {
+                      "result": false,
+                      "msg": "Username or password incorrect."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Invalid request"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/player/update": {
+      "put": {
+        "tags": [
+          "Player"
+        ],
+        "operationId": "updatePlayer",
+        "summary": "Update player statistics",
+        "description": "Adds add_to_games_played and add_to_score values to the player's games_played and total_score.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerUpdateInput"
+              },
+              "example": {
+                "username": "py_luis",
+                "add_to_games_played": 1,
+                "add_to_score": 50
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "failure - user does not exist": {
+                    "summary": "If username does not exist",
+                    "value": {
+                      "result": false,
+                      "msg": "Player does not exist."
+                    }
+                  },
+                  "failure - invalid scores": {
+                    "summary": "If add_to_games_played or add_to_score is negative",
+                    "value": {
+                      "result": false,
+                      "msg": "Invalid scores."
+                    }
+                  },
+                  "success": {
+                    "summary": "If update executed successfully",
+                    "value": {
+                      "result": true,
+                      "msg": "OK"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Invalid request"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompt/create": {
+      "post": {
+        "tags": [
+          "Prompt"
+        ],
+        "operationId": "createPrompt",
+        "summary": "Create a prompt",
+        "description": "Creates and translates a prompt using Azure Translation. The languages the quiplash app supports are English, Welsh, Spanish, Tamil, Chinese Simplified and Arabic.\n\nIf the language detected by Azure Translation Service is not supported by quiplash, defined as the confidence of the detection being less than 0.2, then return a failure.\n\nTags are case insensitive. Duplicate tags are ignored and only one instance of each duplicate tag is stored. At least one tag must be provided otherwise the prompt will not be created and a rejection returned. \n\nNon-latin characters (tamil, chinese, arabic) will not be transliterated, they will be stored as output by the translation service\n\nThe length for the prompt text is between 20 and 100 characters. The translated text may be longer: only the supplied text will have its length checked.\n\nAn error code will be returned if there is a problem accessing the Azure Translation service e.g., it has gone down.\n\nAn error code will be returned if the player does not exist.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptCreateInput"
+              },
+              "examples": {
+                "No duplicate tags": {
+                  "summary": "No duplicate tags",
+                  "value": {
+                    "text": "The most useless Python one-line program",
+                    "username": "py_luis",
+                    "tags": [
+                      "Coding",
+                      "Fun"
+                    ]
+                  }
+                },
+                "Duplicate tags": {
+                  "summary": "Duplicate tags are ignored and only one instance of the tag is stored",
+                  "value": {
+                    "text": "The most useless Python one-line program",
+                    "username": "py_luis",
+                    "tags": [
+                      "Coding",
+                      "Fun",
+                      "Fun"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Result of saving the prompt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "On successful prompt creation",
+                    "value": {
+                      "result": true,
+                      "msg": "OK"
+                    }
+                  },
+                  "failure - prompt length": {
+                    "summary": "If prompt text below/above limit",
+                    "value": {
+                      "result": false,
+                      "msg": "Prompt less than 20 characters or more than 100 characters."
+                    }
+                  },
+                  "failure - no tag": {
+                    "summary": "If no tags are present",
+                    "value": {
+                      "result": false,
+                      "msg": "There must be at least one tag."
+                    }
+                  },
+                  "failure - tag length": {
+                    "summary": "If tag length below/above limit",
+                    "value": {
+                      "result": false,
+                      "msg": "Tag less than 2 characters or more than 10 characters."
+                    }
+                  },
+                  "failure-language": {
+                    "summary": "Invalid language",
+                    "value": {
+                      "result": false,
+                      "msg": "Unsupported language."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Server error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Player not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Player not found."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Invalid request"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompt/moderate": {
+      "post": {
+        "tags": [
+          "Prompt"
+        ],
+        "operationId": "moderatePrompts",
+        "summary": "Moderate prompts",
+        "description": "Moderates English text using Azure Content Safety service. \n\n An error status code will be returned if there is a problem accessing the Azure Content Safety service i.e., if the service has gone down.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptModerateInput"
+              },
+              "example": {
+                "prompt-ids": [
+                  "auto-gen-1",
+                  "auto-gen-2"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return the results of the moderation.\n\n Moderation is only required for the english language text of the prompt \n\n outcome = true if the average severity of the 4 text categories of the prompt is > 2 \n\n outcome = false if the average severity of the 4 text categories is <= 2 \n\n If a prompt-id does not exist in the Collection, do not return error, return appropriate answer for those that do exist.\n\naverage_severity is the average of the severity of the 4 text categories output by the Content Safety API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PromptModerationResult"
+                      }
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                },
+                "example": {
+                  "success": [
+                    {
+                      "prompt-id": "auto-gen-1",
+                      "outcome": true,
+                      "average_severity": 2.3
+                    },
+                    {
+                      "prompt-id": "auto-gen-2",
+                      "outcome": false,
+                      "average_severity": 0.1
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Invalid request"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompt/delete": {
+      "post": {
+        "tags": [
+          "Prompt"
+        ],
+        "operationId": "deletePrompts",
+        "summary": "Delete prompts",
+        "description": "Deletes all prompts authored by player username",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptDeleteInput"
+              },
+              "example": {
+                "username": "py_luis"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deletion result. The number of prompts deleted is indicated in the 'msg' field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                },
+                "example": {
+                  "result": true,
+                  "msg": "X prompts deleted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Invalid request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Player not found so cannot be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Player not found so cannot be deleted"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/utils/get": {
+      "post": {
+        "tags": [
+          "Utils"
+        ],
+        "operationId": "getPrompts",
+        "summary": "Filter prompts",
+        "description": "Return a list of all prompts created by the players in the 'players' list for which at least one of the tags in 'tag_list' exist in their 'tags' field.\n\n If a player in 'players' does not exist or does not have any prompts , do not return error, return prompts from users that do exist and have prompts. \n\nIf none of the usernames in the list exist or have no prompts, return an empty list.  \n\nIf no prompt is tagged with any of tags in 'tag_list', return an empty list. \n\nOutput can be in any order.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerPrompts"
+              },
+              "example": {
+                "players": [
+                  "py_luis",
+                  "vj_python"
+                ],
+                "tag_list": [
+                  "Coding",
+                  "Fun"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matching prompts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Prompt"
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful retrieval of prompts",
+                    "value": [
+                      {
+                        "id": "auto-gen-1",
+                        "username": "py_luis",
+                        "texts": [
+                          {
+                            "language": "en",
+                            "text": "The most useless Python one-line program"
+                          },
+                          {
+                            "language": "cy",
+                            "text": "Y rhaglen un llinell Python fwyaf diwerth"
+                          },
+                          {
+                            "language": "es",
+                            "text": "El programa de una línea de Python más inútil"
+                          },
+                          {
+                            "language": "ta",
+                            "text": "மிகவும் பயனற்ற பைதான் ஒரே வரி நிரல்"
+                          },
+                          {
+                            "language": "zh-Hans",
+                            "text": "最没用的Python一行程序"
+                          },
+                          {
+                            "language": "ar",
+                            "text": "أكثر برنامج بايثون عديم الفائدة في سطر واحد"
+                          }
+                        ],
+                        "tags": [
+                          "Coding",
+                          "Fun"
+                        ]
+                      }
+                    ]
+                  },
+                  "No valid players provided in input list": {
+                    "summary": "No valid players provided in input list.",
+                    "value": []
+                  },
+                  "No prompts found with the provided tags": {
+                    "summary": "No prompts found with the provided tags.",
+                    "value": []
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Invalid request"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "result": false,
+                  "msg": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PlayerRegisterInput": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 12
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 12
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "PlayerLoginInput": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "PlayerUpdateInput": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "add_to_games_played": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "add_to_score": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "username",
+          "add_to_games_played",
+          "add_to_score"
+        ]
+      },
+      "PromptCreateInput": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 100
+          },
+          "username": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 10
+            }
+          }
+        },
+        "required": [
+          "text",
+          "username",
+          "tags"
+        ]
+      },
+      "PromptModerateInput": {
+        "type": "object",
+        "properties": {
+          "prompt-ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "prompt-ids"
+        ]
+      },
+      "PromptModerationResult": {
+        "type": "object",
+        "properties": {
+          "prompt-id": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "boolean"
+          },
+          "average_severity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "prompt-id",
+          "outcome",
+          "average_severity"
+        ]
+      },
+      "PromptDeleteInput": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "Player": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the player. Should be auto-generated by Cosmos DB"
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique username of the player, minimum 5 characters, maximum, 12 characters"
+          },
+          "password": {
+            "type": "string",
+            "description": "Password of the player, minimum 8 characters, maximum, 12 characters. Stored as plaintext in the database."
+          },
+          "games_played": {
+            "type": "integer",
+            "description": "Number of games played by the player. Integer>=0"
+          },
+          "total_score": {
+            "type": "integer",
+            "description": "Score of the player. Integer>=0"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "password",
+          "games_played",
+          "total_score"
+        ]
+      },
+      "Prompt": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the prompt. Should be auto-generated by Cosmos DB"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the player who created the prompt"
+          },
+          "texts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TextEntry"
+            },
+            "description": "Unordered list of pairs {language, text} of a Prompt and its translations to multiple languages."
+          },
+          "tags": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 10
+            },
+            "description": "A set of keyword tags. Tags cannot be repeated. Tags are case-insensitive."
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "texts",
+          "tags"
+        ]
+      },
+      "PlayerPrompts": {
+        "type": "object",
+        "properties": {
+          "players": {
+            "type": "array",
+            "description": "List of player usernames to filter prompts by",
+            "items": {
+              "type": "string",
+              "description": "player username"
+            }
+          },
+          "tag_list": {
+            "type": "array",
+            "description": "List of tags to filter prompts by",
+            "items": {
+              "type": "string",
+              "description": "tag name"
+            }
+          }
+        },
+        "required": [
+          "players",
+          "tag_list"
+        ]
+      },
+      "TextEntry": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "cy",
+              "es",
+              "ta",
+              "zh-Hans",
+              "ar"
+            ],
+            "description": "Language code for the text. Supported languages: English (en), Welsh (cy), Spanish (es), Tamil (ta), Simplified Chinese (zh-Hans), Arabic (ar)"
+          },
+          "text": {
+            "type": "string",
+            "description": "The text of the prompt in the specified language."
+          }
+        },
+        "required": [
+          "language",
+          "text"
+        ]
+      },
+      "GenericResponse": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "boolean"
+          },
+          "msg": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "result",
+          "msg"
+        ]
+      },
+      "DeleteResponse": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "boolean"
+          },
+          "msg": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "result",
+          "msg"
+        ]
+      }
+    }
+  }
+}
