@@ -81,7 +81,46 @@ def register_player(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="player/login", methods=["POST"])
 def login_player(req: func.HttpRequest) -> func.HttpResponse:
-    return not_implemented()
+
+    # Get data
+    try:
+        data = req.get_json()
+    except ValueError:
+        return json_response(False, "Invalid request", 400)
+
+    # make sure it is dictionary
+    if not isinstance(data, dict):
+        return json_response(False, "Invalid request", 400)
+
+    username = data.get("username")
+    password = data.get("password")
+
+    if not isinstance(username, str) or not isinstance(password, str):
+        return json_response(False, "Invalid request", 400)
+
+    try:
+        username_query = """
+                            SELECT c.password
+                            FROM c
+                            WHERE STRINGEQUALS(c.username, @username, true)
+                        """
+        username_parameters = [{"name": "@username", "value": username}]
+
+        
+
+        username_matches = list(player_container.query_items(query=username_query, parameters=username_parameters, enable_cross_partition_query=True))
+
+        if not username_matches:
+            return json_response(False, "Username or password incorrect.", 200)
+
+        if username_matches[0]["password"] == password:
+            return json_response(True, "OK", 200)
+        else:
+            return json_response(False, "Username or password incorrect.", 200)
+    except Exception:
+        logging.exception("Player login failed")
+        return json_response(False, "Server error", 500)
+
 
 
 @app.route(route="player/update", methods=["PUT"])
